@@ -92,6 +92,33 @@
           }
         }
       ]
+    },
+    {
+      "name": "toggle toggles-smoke is declared",
+      "slug": "toggle-toggles-smoke-is-declared",
+      "params": {
+        "authorization": "Bearer contract-qits-consumer",
+        "slug": "toggles-smoke"
+      },
+      "dependsOn": [],
+      "operations": [
+        {
+          "operationId": "getToggleBoolean",
+          "method": "GET",
+          "path": "/toggles/api/toggle/{slug}/boolean",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "status": 200,
+          "file": "toggle-toggles-smoke-is-declared/getToggleBoolean.json",
+          "frozen": {
+            "ids": [],
+            "instants": [],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        }
+      ]
     }
   ]
 }

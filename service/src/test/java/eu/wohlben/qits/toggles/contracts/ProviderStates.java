@@ -35,6 +35,14 @@ public class ProviderStates {
   public static final String A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN =
       "a toggle is declared, asked by an admin";
 
+  /**
+   * The evaluation's state for the smoke toggle, named the way every declared toggle's is (epic
+   * qits-2542): {@code toggle <slug> is declared}, param {@code slug}, so a consumer's pact names
+   * the slug it evaluates concretely. Asked by a platform service's own client ({@value
+   * #CONSUMER_BEARER}), as a toggle's consumer evaluates it.
+   */
+  public static final String TOGGLE_TOGGLES_SMOKE_IS_DECLARED = "toggle toggles-smoke is declared";
+
   /** The toggle the states stage: the smoke toggle, declared in this repository. */
   public static final String SLUG = "toggles-smoke";
 
@@ -69,6 +77,7 @@ public class ProviderStates {
 
   public ProviderStates() {
     states.put(A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN, this::aToggleIsDeclaredAskedByAnAdmin);
+    states.put(TOGGLE_TOGGLES_SMOKE_IS_DECLARED, this::toggleTogglesSmokeIsDeclared);
   }
 
   public Set<String> names() {
@@ -114,6 +123,15 @@ public class ProviderStates {
     grantAdmin();
     Map<String, String> params = new TreeMap<>();
     params.put("authorization", ADMIN_BEARER);
+    params.put("slug", SLUG);
+    return new Setup(Collections.unmodifiableMap(params));
+  }
+
+  private Setup toggleTogglesSmokeIsDeclared() {
+    redeclare(SLUG);
+    grantConsumer();
+    Map<String, String> params = new TreeMap<>();
+    params.put("authorization", CONSUMER_BEARER);
     params.put("slug", SLUG);
     return new Setup(Collections.unmodifiableMap(params));
   }

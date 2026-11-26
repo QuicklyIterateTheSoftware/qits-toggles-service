@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 /**
  * <b>The toggles store</b>: the declared toggles ({@code toggle}) and their ordered rules ({@code
@@ -34,6 +35,10 @@ import java.util.TreeSet;
  * <p><b>The only writer of {@code toggle} rows is {@link #reconcile}</b>, run at startup from the
  * declarations in code. Rules are replaced whole, under the version the writer read ({@link
  * #replaceRules}).
+ *
+ * <p><b>Freezes</b> ({@code toggle_freeze}) hold the first answer per (toggle, origin trace id):
+ * {@link #evaluate} writes one with {@code insert … on conflict do nothing} and answers the row that
+ * stands, so replicas racing on one chain agree; {@link #purgeFreezes} drops the old ones.
  */
 @ApplicationScoped
 public class ToggleStore {
@@ -236,6 +241,85 @@ public class ToggleStore {
     }
     insertRules(db, slug, rules);
     return Replaced.REPLACED;
+  }
+
+  /**
+   * The answer of {@code slug} for the chain {@code originTraceId}, frozen: the stored answer when
+   * the chain already has one, otherwise {@code walk} over the toggle's rules, stored and then read
+   * back. Two replicas evaluating one chain at once both answer the row that was written first —
+   * {@code insert … on conflict do nothing} keeps it, and the read after it returns it.
+   *
+   * @param walk the rules → the answer; only called when the chain has no answer yet
+   * @return the answer, or empty when no toggle is declared as {@code slug}
+   */
+  public Optional<Boolean> evaluate(
+      String slug, String originTraceId, Function<List<Rule>, Boolean> walk) {
+    return DbRetry.call(
+        "evaluate the toggle " + slug,
+        () -> {
+          try (Connection db = toggles.getConnection()) {
+            Optional<Boolean> frozen = frozen(db, slug, originTraceId);
+            if (frozen.isPresent()) {
+              return frozen;
+            }
+            Optional<StoredToggle> toggle = snapshot(db, slug).stream().findFirst();
+            if (toggle.isEmpty()) {
+              return Optional.<Boolean>empty();
+            }
+            db.setAutoCommit(true);
+            boolean value = walk.apply(toggle.get().rules());
+            try (PreparedStatement insert =
+                db.prepareStatement(
+                    "insert into toggles.toggle_freeze (slug, origin_trace_id, value, frozen_at)"
+                        + " values (?, ?, ?, now()) on conflict (slug, origin_trace_id) do nothing")) {
+              insert.setString(1, slug);
+              insert.setString(2, originTraceId);
+              insert.setBoolean(3, value);
+              insert.executeUpdate();
+            } catch (SQLException e) {
+              if (FOREIGN_KEY_VIOLATION.equals(e.getSQLState())) {
+                // Undeclared between the read and the write: a reconcile deleted it.
+                return Optional.<Boolean>empty();
+              }
+              throw e;
+            }
+            return frozen(db, slug, originTraceId);
+          } catch (SQLException e) {
+            throw new IllegalStateException("evaluating the toggle " + slug + " failed", e);
+          }
+        });
+  }
+
+  /** Delete every freeze made before {@code before}; answers how many went. */
+  public int purgeFreezes(Instant before) {
+    return DbRetry.call(
+        "purge the old freezes",
+        () -> {
+          try (Connection db = toggles.getConnection();
+              PreparedStatement delete =
+                  db.prepareStatement("delete from toggles.toggle_freeze where frozen_at < ?")) {
+            delete.setTimestamp(1, Timestamp.from(before));
+            return delete.executeUpdate();
+          } catch (SQLException e) {
+            throw new IllegalStateException("purging the old freezes failed", e);
+          }
+        });
+  }
+
+  /** SQLSTATE foreign_key_violation. */
+  private static final String FOREIGN_KEY_VIOLATION = "23503";
+
+  private static Optional<Boolean> frozen(Connection db, String slug, String originTraceId)
+      throws SQLException {
+    try (PreparedStatement read =
+        db.prepareStatement(
+            "select value from toggles.toggle_freeze where slug = ? and origin_trace_id = ?")) {
+      read.setString(1, slug);
+      read.setString(2, originTraceId);
+      try (ResultSet row = read.executeQuery()) {
+        return row.next() ? Optional.of(row.getBoolean(1)) : Optional.empty();
+      }
+    }
   }
 
   private static void insertRules(Connection db, String slug, List<Rule> rules)

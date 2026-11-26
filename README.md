@@ -25,6 +25,30 @@ The platform's feature toggles (epic qits-2542), deployed as the application `qi
 Every door under `/toggles/api` takes a bearer: an anonymous request answers 401 before any door is
 matched (`quarkus.http.auth.permission.authenticated`). Health is at `/toggles/q/health/ready`.
 
+## Evaluating a toggle
+
+`GET /toggles/api/toggle/{slug}/boolean` (`getToggleBoolean`) answers a JSON `true` or `false` to
+any bearer. An undeclared slug answers 400 naming it, and a type segment other than `boolean` has no
+route.
+
+1. **The chain** is the request's `ChainContext` (qits-integrations-quarkus-javalib): its origin
+   trace id and whom it acts for. The library has already applied its rule: only a plain service
+   client's `X-Qits-Origin-Trace-Id` and `X-Qits-On-Behalf-Of` count. A person or an agent always
+   starts its own chain at its own trace id and speaks for its own bearer, whatever headers it sends.
+2. **A frozen answer wins.** When (slug, origin trace id) has a freeze, that is the answer.
+3. **Otherwise the rules are walked in order** (`RuleWalk`), with the subject = the chain's
+   on-behalf-of user, else the caller's own `sub`.
+4. **The answer is frozen** with `insert … on conflict do nothing`, and the row that stands is
+   answered, so two replicas racing on one chain agree.
+
+`FreezePurge` drops freezes older than `qits.toggles.freeze-ttl` (1h) every minute, on every
+replica; the delete is idempotent.
+
+**A consumer** calls it like any peer, through a small REST-client interface with its own service
+bearer. The integrations library stamps both chain headers on every outgoing call, so no call site
+sets them. The consumer declares a pact on its toggle's concrete path, which is how the retirement
+run knows the toggle is still used. Golden-master state: `toggle <slug> is declared`, param `slug`.
+
 ## Layout
 
 - `domain/` — the `toggles` datasource and its Flyway lineage (`db/toggles/migration`, schema

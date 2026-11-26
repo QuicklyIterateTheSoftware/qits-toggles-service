@@ -93,6 +93,13 @@ class GoldenMasterRecordingTest {
               "PUT",
               TOGGLE_PATH + "/rules",
               RULES,
+              200),
+          new Interaction(
+              ProviderStates.TOGGLE_TOGGLES_SMOKE_IS_DECLARED,
+              "getToggleBoolean",
+              "GET",
+              "/toggles/api/toggle/{slug}/boolean",
+              null,
               200));
 
   private static final ObjectMapper JSON = new ObjectMapper();

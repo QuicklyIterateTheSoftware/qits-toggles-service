@@ -33,6 +33,11 @@
             <artifactId>quarkus-smallrye-openapi</artifactId>
         </dependency>
         <dependency>
+            <!-- The per-minute purge of freezes older than qits.toggles.freeze-ttl (FreezePurge). -->
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
+        <dependency>
             <!-- /toggles/q/health/ready, with a readiness check for the datasource. -->
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-health</artifactId>

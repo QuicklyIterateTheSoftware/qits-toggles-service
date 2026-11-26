@@ -66,6 +66,37 @@ components:
       openIdConnectUrl: https://idp.qits.wohlben.eu/idp/.well-known/openid-configuration
       description: Authentication
 paths:
+  /toggles/api/toggle/{slug}/boolean:
+    get:
+      summary: "A declared toggle's answer, frozen for the call chain's origin trace"
+      operationId: getToggleBoolean
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: true or false
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "400":
+          description: No toggle is declared with that slug
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      tags:
+      - Evaluation Resource
+      security:
+      - SecurityScheme: []
   /toggles/api/toggles:
     get:
       summary: Every declared toggle with its rules

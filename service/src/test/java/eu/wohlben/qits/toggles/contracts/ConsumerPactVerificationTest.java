@@ -111,4 +111,9 @@ class ConsumerPactVerificationTest {
   Map<String, String> aToggleIsDeclaredAskedByAnAdmin() {
     return states.params(ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN);
   }
+
+  @State(ProviderStates.TOGGLE_TOGGLES_SMOKE_IS_DECLARED)
+  Map<String, String> toggleTogglesSmokeIsDeclared() {
+    return states.params(ProviderStates.TOGGLE_TOGGLES_SMOKE_IS_DECLARED);
+  }
 }
