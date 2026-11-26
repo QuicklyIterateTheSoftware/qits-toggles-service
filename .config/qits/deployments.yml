@@ -17,3 +17,15 @@ health_path: /toggles/q/health/ready
 #   idp:client   this application's own qits-idp service client, `<env>-qits-toggles`: the bearer the
 #                telemetry exporters present.
 resources: postgresql:db:qits_toggles, idp:client
+
+# PRIVATE (qits-2714): served by qits-edge-private only, reached through the WireGuard tunnel or the
+# qits-private overlay, like every peer it calls and every caller it has. A service sits on exactly
+# one network (qits-2174), and the default, public, put this one on qits-net alone, where
+# maintenance.qits.<domain> and projects.qits.<domain> — both `exposure: private` — resolve to
+# nothing that answers: the retirement run's interactions read gave up on `HTTP connect timed out`
+# (run 8a055c37, trace 71805015) while idp, which is public, answered its token fetch. Its callers,
+# qits-orchestrator and qits-landing, are private already, so they keep reaching it. Its database
+# moves to the private Postgres, qits-oci-postgresql-private, with its data, verified, at the first
+# deploy that carries this line (qits-2175). Revert: delete this line, which moves the database back
+# to the public server with the service.
+exposure: private
