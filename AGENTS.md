@@ -17,17 +17,28 @@ qits-maintenance's bumps — never by hand (a first adoption is the exception: i
 ## Layout
 
 - `domain/` — owns the `toggles` datasource and the Flyway lineage at `db/toggles/migration`
-  (schema `toggles`). Stores are **plain JDBC** — no persistence unit, no entity. The first entity,
+  (schema `toggles`: `toggle`, `toggle_rule`, `toggle_freeze`). `store/ToggleStore` is **plain
+  JDBC** — no persistence unit, no entity: the reconcile, the reads (one repeatable-read snapshot
+  per call) and the whole-list rules replace under a version. The first entity,
   if one ever comes, is marked for `CausationRowRules` (`CausedRow` or `@Uncaused`) and brings
   `EntityExposureTest`, `docs/entities.json` and `entities:`/`database:` in release.yml.
-- `service/` — the deployable: `api/` the doors and `Roles`.
+- `service/` — the deployable: `api/` the doors and `Roles`; `declarations/` the DSL (`Toggle`),
+  the declarations themselves (`Declared`, one `@Produces` field per toggle), their collection and
+  check (`Declarations`) and the startup reconcile (`DeclarationReconcile`).
 
 ## Conventions
 
 - **No anonymous door** under `/toggles/api`: the `authenticated` permission in
   application.properties covers the whole path. Health is outside it.
-- **A toggle is never created or deleted by a door.** It exists by its declaration in code; the
-  startup reconcile is the only writer of the `toggle` table's rows.
+- **A toggle is never created or deleted by a door.** It exists by its declaration in code
+  (`declarations/Declared`); the startup reconcile is the only writer of the `toggle` table's rows.
+  A new slug gets one STATIC rule from its default; an existing slug keeps its rules (only its
+  description and declared default follow the code); an undeclared slug is deleted with its rules
+  and freezes (cascade). Never add a door or a job that inserts or deletes a `toggle` row.
+- **Slugs** are `^[a-z][a-z0-9-]{1,62}$` (`Toggle.bool` refuses others) and unique
+  (`Declarations.check`); `declarations/ToggleTest` checks every field of `Declared`, so a bad or
+  duplicate slug fails the build. The smoke toggle `toggles-smoke` is declared on purpose and no
+  pact uses it: its removal ticket is the retirement's live proof.
 - **Who changes rules**: `qits:admin` and `qits:desk-admin`. `DeskAdminParityTest` holds: wherever
   `qits:admin-agent` is admitted, so is `qits:desk-admin`.
 - **Reflection** (native): every type bound by Jackson on a door is registered for reflection
