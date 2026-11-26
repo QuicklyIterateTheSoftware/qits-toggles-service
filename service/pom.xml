@@ -6,7 +6,7 @@
     <parent>
         <groupId>eu.wohlben.qits</groupId>
         <artifactId>qits-toggles</artifactId>
-        <version>2026.1126.151434</version>
+        <version>2026.1126.191314</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <!-- The deployable: health and the API under /toggles (port 8080, behind the public edge). -->

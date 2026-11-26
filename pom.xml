@@ -21,7 +21,7 @@
          ranges: qits-maintenance bumps each one. -->
     <groupId>eu.wohlben.qits</groupId>
     <artifactId>qits-toggles</artifactId>
-    <version>2026.1126.151434</version>
+    <version>2026.1126.191314</version>
     <packaging>pom</packaging>
     <name>qits-toggles</name>
 
