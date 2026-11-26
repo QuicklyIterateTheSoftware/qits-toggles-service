@@ -1,0 +1,19 @@
+# How qits-deployments deploys this repository. It reads this file from the git host at the built
+# sha, so the answer travels with the commit; carrying the file at all is what says it deploys.
+#
+# THE DEPLOYED IDENTITY: the application qits-toggles, its image qits/qits-toggles, its database and
+# its idp client all carry this name.
+application: qits-toggles
+
+# https://toggles.qits.<domain>/toggles: the API at /toggles/api (evaluation and configuration) and
+# health at /toggles/q.
+host: toggles
+routes: /toggles
+health_path: /toggles/q/health/ready
+
+# A DATABASE AND A SERVICE CLIENT.
+#   db           qits_toggles: the declared toggles, their rules and the per-chain freezes (schema
+#                toggles).
+#   idp:client   this application's own qits-idp service client, `<env>-qits-toggles`: the bearer the
+#                telemetry exporters present.
+resources: postgresql:db:qits_toggles, idp:client

@@ -1,0 +1,20 @@
+# Build context trim for `docker build -f docker/Dockerfile .` (root context, whole reactor).
+
+.git
+.gitignore
+
+# Maven build output. It is regenerated inside the build stage, and a stale copy could shadow what
+# the stage compiles.
+**/target
+**/target-ide
+
+# Local env / IDE cruft
+.env
+.idea
+.vscode
+.sdkmanrc
+
+# Docs and the docker/ dir itself: nothing in the build reads them, so editing a README does not
+# bust the copy layer.
+*.md
+docker

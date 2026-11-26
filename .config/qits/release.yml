@@ -1,0 +1,25 @@
+# How this repository releases: the packaged java-service recipe (qits-ci-service
+# ci/src/main/resources/release-archetypes/java-service.yml) — build and test the fold, then push the
+# one image and publish the declared contracts.
+archetype: java-service
+
+artifacts:
+  - { type: docker, name: qits/qits-toggles, sbom: .sbom/sbom.json }
+  # The committed OpenAPI document, published as `@apidocs/qits-toggles` on every release
+  # (OpenApiSchemaExportTest keeps it current).
+  - { type: docs, name: "@apidocs/qits-toggles", path: docs/openapi.yml }
+
+# The userflow catalogue (service/src/test/.../stories/**IT), published as @userflows/qits-toggles:
+# the java-service recipe's build-and-test step requires */target/userstories from the verify.
+userflows: qits-toggles
+
+# The provider golden masters: the platform packages `golden-masters/` as
+# `eu.wohlben.qits:qits-toggles-golden-masters` (maven) and `@qits/toggles-golden-masters` (npm).
+# contracts/GoldenMasterRecordingTest records them. A consumer of a toggle pins them and writes its
+# pact for `GET /toggles/api/toggle/<slug>/boolean`; the retirement reads those pacts (epic
+# qits-2542).
+#
+# No entity map and no entity diagram: the store is plain JDBC, so there is no @Entity to map.
+contracts:
+  application: qits-toggles
+  golden-masters: { from: golden-masters/, packages: [maven, npm] }
