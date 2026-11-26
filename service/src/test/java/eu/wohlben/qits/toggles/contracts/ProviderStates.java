@@ -1,10 +1,13 @@
 package eu.wohlben.qits.toggles.contracts;
 
 import eu.wohlben.qits.toggles.declarations.Declarations;
+import eu.wohlben.qits.toggles.declarations.Toggle;
+import eu.wohlben.qits.toggles.store.Rule;
 import eu.wohlben.qits.toggles.store.ToggleStore;
 import eu.wohlben.qits.toggles.support.ContractCallers;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.sql.Connection;
@@ -25,9 +28,20 @@ import java.util.function.Supplier;
  * callers: {@link GoldenMasterRecordingTest} runs a state before each operation that names it, and
  * {@link ConsumerPactVerificationTest}'s {@code @State} methods delegate here.
  *
- * <p>{@value #A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN} is the configuration doors' state: the smoke
- * toggle {@value #SLUG} as a fresh declaration (version 0, its one STATIC rule), asked by a person
- * holding {@code qits:admin} ({@value #ADMIN_BEARER}). Applying a state twice is the same state.
+ * <ul>
+ *   <li><b>{@code toggle <slug> is declared}</b> ({@link #declared}), one per declared toggle: the
+ *       evaluation, asked by a platform service's own client ({@value #CONSUMER_BEARER}), so a
+ *       consumer's pact names the slug it evaluates;
+ *   <li>{@value #A_TOGGLE_SLUG_IS_NOT_DECLARED}: the evaluation's and the read's refusal;
+ *   <li>{@value #A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN}: the configuration doors, the smoke toggle
+ *       {@value #SLUG} as a fresh declaration (version 0, its one STATIC rule), asked by a person
+ *       holding {@code qits:admin} ({@value #ADMIN_BEARER});
+ *   <li>the rules door's refusals: {@value #A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN}
+ *       (400), {@value #A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT} (403) and {@value
+ *       #A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM} (409).
+ * </ul>
+ *
+ * <p>Applying a state twice is the same state.
  */
 @ApplicationScoped
 public class ProviderStates {
@@ -42,6 +56,39 @@ public class ProviderStates {
    * #CONSUMER_BEARER}), as a toggle's consumer evaluates it.
    */
   public static final String TOGGLE_TOGGLES_SMOKE_IS_DECLARED = "toggle toggles-smoke is declared";
+
+  /** The evaluation's refusal: a slug nothing declares, asked by a service's own client. */
+  public static final String A_TOGGLE_SLUG_IS_NOT_DECLARED = "a toggle slug is not declared";
+
+  /** The slug {@value #A_TOGGLE_SLUG_IS_NOT_DECLARED} names. */
+  public static final String UNDECLARED_SLUG = "no-such-toggle";
+
+  /** The rules door's 403: a toggle is declared, and an agent without a configuring role asks. */
+  public static final String A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT =
+      "a toggle is declared, asked by an agent";
+
+  /** The rules door's 400: an admin sends a list of the wrong shape. */
+  public static final String A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN =
+      "a toggle is declared, sent malformed rules by an admin";
+
+  /** The rules door's 409: the rules changed (version 1) since the admin read version 0. */
+  public static final String A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM =
+      "a toggle's rules changed since an admin read them";
+
+  /** An agent's own token, holding no configuring role. */
+  public static final String AGENT = "tok-project-agent-contract";
+
+  /** The bearer {@link #AGENT} presents. */
+  public static final String AGENT_BEARER = "Bearer contract-qits-agent";
+
+  /**
+   * The evaluation state of the declared toggle {@code slug}: {@code toggle <slug> is declared},
+   * param {@code slug}. There is one per declared toggle, so a consumer's pact names the slug it
+   * evaluates concretely; {@code DeclaredStatesTest} holds every declaration to its callback.
+   */
+  public static String declared(String slug) {
+    return "toggle " + slug + " is declared";
+  }
 
   /** The toggle the states stage: the smoke toggle, declared in this repository. */
   public static final String SLUG = "toggles-smoke";
@@ -77,7 +124,20 @@ public class ProviderStates {
 
   public ProviderStates() {
     states.put(A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN, this::aToggleIsDeclaredAskedByAnAdmin);
-    states.put(TOGGLE_TOGGLES_SMOKE_IS_DECLARED, this::toggleTogglesSmokeIsDeclared);
+    states.put(A_TOGGLE_SLUG_IS_NOT_DECLARED, this::aToggleSlugIsNotDeclared);
+    states.put(A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT, this::aToggleIsDeclaredAskedByAnAgent);
+    states.put(
+        A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN, this::aToggleIsDeclaredAskedByAnAdmin);
+    states.put(
+        A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM, this::aTogglesRulesChangedSinceAnAdminRead);
+  }
+
+  /** One evaluation state per declared toggle, from the declarations themselves. */
+  @PostConstruct
+  void declaredToggles() {
+    for (Toggle toggle : declarations.all()) {
+      states.put(declared(toggle.slug()), () -> toggleIsDeclared(toggle.slug()));
+    }
   }
 
   public Set<String> names() {
@@ -127,12 +187,37 @@ public class ProviderStates {
     return new Setup(Collections.unmodifiableMap(params));
   }
 
-  private Setup toggleTogglesSmokeIsDeclared() {
-    redeclare(SLUG);
+  private Setup toggleIsDeclared(String slug) {
+    redeclare(slug);
     grantConsumer();
+    return params(CONSUMER_BEARER, slug);
+  }
+
+  private Setup aToggleSlugIsNotDeclared() {
+    store.reconcile(declarations.forReconcile());
+    grantConsumer();
+    return params(CONSUMER_BEARER, UNDECLARED_SLUG);
+  }
+
+  private Setup aToggleIsDeclaredAskedByAnAgent() {
+    redeclare(SLUG);
+    ContractCallers.bearer(AGENT_BEARER, AGENT, Set.of("qits:agent"), Set.of("qits:agent"));
+    return params(AGENT_BEARER, SLUG);
+  }
+
+  private Setup aTogglesRulesChangedSinceAnAdminRead() {
+    redeclare(SLUG);
+    if (store.replaceRules(SLUG, 0, List.of(Rule.always(true))) != ToggleStore.Replaced.REPLACED) {
+      throw new IllegalStateException("could not move " + SLUG + " to version 1");
+    }
+    grantAdmin();
+    return params(ADMIN_BEARER, SLUG);
+  }
+
+  private static Setup params(String authorization, String slug) {
     Map<String, String> params = new TreeMap<>();
-    params.put("authorization", CONSUMER_BEARER);
-    params.put("slug", SLUG);
+    params.put("authorization", authorization);
+    params.put("slug", slug);
     return new Setup(Collections.unmodifiableMap(params));
   }
 

@@ -112,8 +112,31 @@ class ConsumerPactVerificationTest {
     return states.params(ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN);
   }
 
+  // One per declared toggle, `toggle <slug> is declared` (ProviderStates.declared): a declaration
+  // added without its line here fails ProviderStateCoverageTest, since its golden master is recorded.
+
   @State(ProviderStates.TOGGLE_TOGGLES_SMOKE_IS_DECLARED)
   Map<String, String> toggleTogglesSmokeIsDeclared() {
     return states.params(ProviderStates.TOGGLE_TOGGLES_SMOKE_IS_DECLARED);
+  }
+
+  @State(ProviderStates.A_TOGGLE_SLUG_IS_NOT_DECLARED)
+  Map<String, String> aToggleSlugIsNotDeclared() {
+    return states.params(ProviderStates.A_TOGGLE_SLUG_IS_NOT_DECLARED);
+  }
+
+  @State(ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT)
+  Map<String, String> aToggleIsDeclaredAskedByAnAgent() {
+    return states.params(ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT);
+  }
+
+  @State(ProviderStates.A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN)
+  Map<String, String> aToggleIsDeclaredSentMalformedRulesByAnAdmin() {
+    return states.params(ProviderStates.A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN);
+  }
+
+  @State(ProviderStates.A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM)
+  Map<String, String> aTogglesRulesChangedSinceAnAdminReadThem() {
+    return states.params(ProviderStates.A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM);
   }
 }

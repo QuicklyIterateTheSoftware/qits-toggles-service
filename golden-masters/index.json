@@ -94,6 +94,197 @@
       ]
     },
     {
+      "name": "a toggle is declared, asked by an agent",
+      "slug": "a-toggle-is-declared-asked-by-an-agent",
+      "params": {
+        "authorization": "Bearer contract-qits-agent",
+        "slug": "toggles-smoke"
+      },
+      "dependsOn": [],
+      "operations": [
+        {
+          "operationId": "putToggleRules",
+          "method": "PUT",
+          "path": "/toggles/api/toggles/{slug}/rules",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "body": {
+            "version": 0,
+            "rules": [
+              {
+                "kind": "USER",
+                "value": true,
+                "userSubjects": [
+                  "tok-project-agent-qits-developer"
+                ],
+                "afterInstant": null
+              },
+              {
+                "kind": "TIME",
+                "value": true,
+                "userSubjects": null,
+                "afterInstant": "2026-12-01T00:00:00Z"
+              },
+              {
+                "kind": "STATIC",
+                "value": false,
+                "userSubjects": null,
+                "afterInstant": null
+              }
+            ]
+          },
+          "status": 403,
+          "file": "a-toggle-is-declared-asked-by-an-agent/putToggleRules.json",
+          "frozen": {
+            "ids": [],
+            "instants": [],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "a toggle is declared, sent malformed rules by an admin",
+      "slug": "a-toggle-is-declared-sent-malformed-rules-by-an-admin",
+      "params": {
+        "authorization": "Bearer contract-qits-admin",
+        "slug": "toggles-smoke"
+      },
+      "dependsOn": [],
+      "operations": [
+        {
+          "operationId": "putToggleRules",
+          "method": "PUT",
+          "path": "/toggles/api/toggles/{slug}/rules",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "body": {
+            "version": 0,
+            "rules": [
+              {
+                "kind": "STATIC",
+                "value": false,
+                "userSubjects": null,
+                "afterInstant": null
+              },
+              {
+                "kind": "TIME",
+                "value": true,
+                "userSubjects": null,
+                "afterInstant": "2026-12-01T00:00:00Z"
+              }
+            ]
+          },
+          "status": 400,
+          "file": "a-toggle-is-declared-sent-malformed-rules-by-an-admin/putToggleRules.json",
+          "frozen": {
+            "ids": [],
+            "instants": [],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "a toggle's rules changed since an admin read them",
+      "slug": "a-toggle-s-rules-changed-since-an-admin-read-them",
+      "params": {
+        "authorization": "Bearer contract-qits-admin",
+        "slug": "toggles-smoke"
+      },
+      "dependsOn": [],
+      "operations": [
+        {
+          "operationId": "putToggleRules",
+          "method": "PUT",
+          "path": "/toggles/api/toggles/{slug}/rules",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "body": {
+            "version": 0,
+            "rules": [
+              {
+                "kind": "USER",
+                "value": true,
+                "userSubjects": [
+                  "tok-project-agent-qits-developer"
+                ],
+                "afterInstant": null
+              },
+              {
+                "kind": "TIME",
+                "value": true,
+                "userSubjects": null,
+                "afterInstant": "2026-12-01T00:00:00Z"
+              },
+              {
+                "kind": "STATIC",
+                "value": false,
+                "userSubjects": null,
+                "afterInstant": null
+              }
+            ]
+          },
+          "status": 409,
+          "file": "a-toggle-s-rules-changed-since-an-admin-read-them/putToggleRules.json",
+          "frozen": {
+            "ids": [],
+            "instants": [],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "a toggle slug is not declared",
+      "slug": "a-toggle-slug-is-not-declared",
+      "params": {
+        "authorization": "Bearer contract-qits-consumer",
+        "slug": "no-such-toggle"
+      },
+      "dependsOn": [],
+      "operations": [
+        {
+          "operationId": "getToggle",
+          "method": "GET",
+          "path": "/toggles/api/toggles/{slug}",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "status": 404,
+          "file": "a-toggle-slug-is-not-declared/getToggle.json",
+          "frozen": {
+            "ids": [],
+            "instants": [],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        },
+        {
+          "operationId": "getToggleBoolean",
+          "method": "GET",
+          "path": "/toggles/api/toggle/{slug}/boolean",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "status": 400,
+          "file": "a-toggle-slug-is-not-declared/getToggleBoolean.json",
+          "frozen": {
+            "ids": [],
+            "instants": [],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        }
+      ]
+    },
+    {
       "name": "toggle toggles-smoke is declared",
       "slug": "toggle-toggles-smoke-is-declared",
       "params": {

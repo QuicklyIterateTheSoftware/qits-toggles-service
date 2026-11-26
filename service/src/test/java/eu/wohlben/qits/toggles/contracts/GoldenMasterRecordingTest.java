@@ -71,36 +71,85 @@ class GoldenMasterRecordingTest {
           + "{\"kind\":\"TIME\",\"value\":true,\"userSubjects\":null,\"afterInstant\":\"2026-12-01T00:00:00Z\"},"
           + "{\"kind\":\"STATIC\",\"value\":false,\"userSubjects\":null,\"afterInstant\":null}]}";
 
-  static final List<Interaction> INTERACTIONS =
-      List.of(
+  /** A list of the wrong shape: its STATIC rule is not last. */
+  static final String MALFORMED_RULES =
+      "{\"version\":0,\"rules\":["
+          + "{\"kind\":\"STATIC\",\"value\":false,\"userSubjects\":null,\"afterInstant\":null},"
+          + "{\"kind\":\"TIME\",\"value\":true,\"userSubjects\":null,\"afterInstant\":\"2026-12-01T00:00:00Z\"}]}";
+
+  static final String EVALUATION_PATH = "/toggles/api/toggle/{slug}/boolean";
+
+  static final List<Interaction> INTERACTIONS = interactions();
+
+  private static List<Interaction> interactions() {
+    List<Interaction> all = new ArrayList<>();
+    // One evaluation golden master per declared toggle, so a consumer's pact names its slug.
+    for (String slug : DeclaredSlugs.all()) {
+      all.add(
           new Interaction(
-              ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
-              "getToggles",
-              "GET",
-              TOGGLES_PATH,
-              null,
-              200),
-          new Interaction(
-              ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
-              "getToggle",
-              "GET",
-              TOGGLE_PATH,
-              null,
-              200),
-          new Interaction(
-              ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
-              "putToggleRules",
-              "PUT",
-              TOGGLE_PATH + "/rules",
-              RULES,
-              200),
-          new Interaction(
-              ProviderStates.TOGGLE_TOGGLES_SMOKE_IS_DECLARED,
-              "getToggleBoolean",
-              "GET",
-              "/toggles/api/toggle/{slug}/boolean",
-              null,
-              200));
+              ProviderStates.declared(slug), "getToggleBoolean", "GET", EVALUATION_PATH, null, 200));
+    }
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_SLUG_IS_NOT_DECLARED,
+            "getToggleBoolean",
+            "GET",
+            EVALUATION_PATH,
+            null,
+            400));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_SLUG_IS_NOT_DECLARED, "getToggle", "GET", TOGGLE_PATH, null, 404));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
+            "getToggles",
+            "GET",
+            TOGGLES_PATH,
+            null,
+            200));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
+            "getToggle",
+            "GET",
+            TOGGLE_PATH,
+            null,
+            200));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
+            "putToggleRules",
+            "PUT",
+            TOGGLE_PATH + "/rules",
+            RULES,
+            200));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN,
+            "putToggleRules",
+            "PUT",
+            TOGGLE_PATH + "/rules",
+            MALFORMED_RULES,
+            400));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT,
+            "putToggleRules",
+            "PUT",
+            TOGGLE_PATH + "/rules",
+            RULES,
+            403));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM,
+            "putToggleRules",
+            "PUT",
+            TOGGLE_PATH + "/rules",
+            RULES,
+            409));
+    return List.copyOf(all);
+  }
 
   private static final ObjectMapper JSON = new ObjectMapper();
 
