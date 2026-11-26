@@ -3,12 +3,169 @@
 ---
 openapi: 3.1.0
 components:
+  schemas:
+    Instant:
+      type: string
+      format: date-time
+      examples:
+      - 2022-03-10T16:15:50Z
+    Problem:
+      type: object
+      properties:
+        error:
+          type: string
+        position:
+          type: integer
+          format: int32
+    RuleView:
+      type: object
+      properties:
+        kind:
+          type: string
+        value:
+          type: boolean
+        userSubjects:
+          type: array
+          items:
+            type: string
+        afterInstant:
+          $ref: "#/components/schemas/Instant"
+    RulesReplace:
+      type: object
+      properties:
+        version:
+          type: integer
+          format: int64
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/RuleView"
+    ToggleView:
+      type: object
+      properties:
+        slug:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        declaredDefault:
+          type: boolean
+        firstDeclaredAt:
+          $ref: "#/components/schemas/Instant"
+        version:
+          type: integer
+          format: int64
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/RuleView"
   securitySchemes:
     SecurityScheme:
       type: openIdConnect
       openIdConnectUrl: https://idp.qits.wohlben.eu/idp/.well-known/openid-configuration
       description: Authentication
+paths:
+  /toggles/api/toggles:
+    get:
+      summary: Every declared toggle with its rules
+      operationId: getToggles
+      responses:
+        "200":
+          description: "The toggles, by slug"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ToggleView"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      tags:
+      - Toggles Resource
+      security:
+      - SecurityScheme: []
+  /toggles/api/toggles/{slug}:
+    get:
+      summary: One declared toggle with its rules
+      operationId: getToggle
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The toggle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToggleView"
+        "404":
+          description: No toggle is declared with that slug
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      tags:
+      - Toggles Resource
+      security:
+      - SecurityScheme: []
+  /toggles/api/toggles/{slug}/rules:
+    put:
+      summary: Replace a toggle's ordered rules (qits:admin or the delivery desk)
+      operationId: putToggleRules
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RulesReplace"
+        required: true
+      responses:
+        "200":
+          description: "Replaced; the toggle as it is now, its version moved by one"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToggleView"
+        "400":
+          description: "The list is malformed (not exactly one STATIC rule, last;\
+            \ a USER rule without subjects; a TIME rule without its instant), the\
+            \ version is missing, or no toggle is declared with that slug"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "403":
+          description: Neither qits:admin nor qits:desk-admin
+        "409":
+          description: "The version is not the one held: someone else changed the\
+            \ rules first"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "401":
+          description: Not Authorized
+      tags:
+      - Toggles Resource
+      security:
+      - SecurityScheme:
+        - qits:admin
+        - qits:desk-admin
 info:
   title: qits-toggles API
   version: "0"
-paths: {}

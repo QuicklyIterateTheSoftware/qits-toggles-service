@@ -60,8 +60,40 @@ class GoldenMasterRecordingTest {
     }
   }
 
-  /** The interactions recorded; none until the first door. */
-  static final List<Interaction> INTERACTIONS = List.of();
+  static final String TOGGLES_PATH = "/toggles/api/toggles";
+
+  static final String TOGGLE_PATH = TOGGLES_PATH + "/{slug}";
+
+  /** The rules the configuration state's {@code PUT} sends: one of each kind, the STATIC last. */
+  static final String RULES =
+      "{\"version\":0,\"rules\":["
+          + "{\"kind\":\"USER\",\"value\":true,\"userSubjects\":[\"tok-project-agent-qits-developer\"],\"afterInstant\":null},"
+          + "{\"kind\":\"TIME\",\"value\":true,\"userSubjects\":null,\"afterInstant\":\"2026-12-01T00:00:00Z\"},"
+          + "{\"kind\":\"STATIC\",\"value\":false,\"userSubjects\":null,\"afterInstant\":null}]}";
+
+  static final List<Interaction> INTERACTIONS =
+      List.of(
+          new Interaction(
+              ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
+              "getToggles",
+              "GET",
+              TOGGLES_PATH,
+              null,
+              200),
+          new Interaction(
+              ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
+              "getToggle",
+              "GET",
+              TOGGLE_PATH,
+              null,
+              200),
+          new Interaction(
+              ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
+              "putToggleRules",
+              "PUT",
+              TOGGLE_PATH + "/rules",
+              RULES,
+              200));
 
   private static final ObjectMapper JSON = new ObjectMapper();
 

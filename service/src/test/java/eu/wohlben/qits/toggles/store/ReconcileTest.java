@@ -39,8 +39,17 @@ class ReconcileTest {
   }
 
   @Test
-  void theSmokeToggleWasCreatedAtStartupWithOneStaticRule() {
+  void theSmokeToggleIsCreatedFromItsDeclarationWithOneStaticRule() throws Exception {
+    // As the startup reconcile meets it on a fresh store (another suite may have changed its rules).
+    try (Connection db = toggles.getConnection();
+        PreparedStatement delete =
+            db.prepareStatement("delete from toggles.toggle where slug = 'toggles-smoke'")) {
+      delete.executeUpdate();
+    }
+    ToggleStore.Reconciled done = store.reconcile(declarations.forReconcile());
+    assertTrue(done.created().contains("toggles-smoke"));
     ToggleStore.StoredToggle smoke = store.find("toggles-smoke").orElseThrow();
+    assertEquals(0L, smoke.version());
     assertEquals("BOOLEAN", smoke.type());
     assertEquals(false, smoke.declaredDefault());
     assertEquals(List.of(Rule.always(false)), smoke.rules());

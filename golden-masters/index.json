@@ -1,5 +1,97 @@
 {
   "formatVersion": 1,
   "provider": "qits-toggles",
-  "states": []
+  "states": [
+    {
+      "name": "a toggle is declared, asked by an admin",
+      "slug": "a-toggle-is-declared-asked-by-an-admin",
+      "params": {
+        "authorization": "Bearer contract-qits-admin",
+        "slug": "toggles-smoke"
+      },
+      "dependsOn": [],
+      "operations": [
+        {
+          "operationId": "getToggle",
+          "method": "GET",
+          "path": "/toggles/api/toggles/{slug}",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "status": 200,
+          "file": "a-toggle-is-declared-asked-by-an-admin/getToggle.json",
+          "frozen": {
+            "ids": [],
+            "instants": [
+              "$.firstDeclaredAt"
+            ],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        },
+        {
+          "operationId": "getToggles",
+          "method": "GET",
+          "path": "/toggles/api/toggles",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "status": 200,
+          "file": "a-toggle-is-declared-asked-by-an-admin/getToggles.json",
+          "frozen": {
+            "ids": [],
+            "instants": [
+              "$[*].firstDeclaredAt"
+            ],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        },
+        {
+          "operationId": "putToggleRules",
+          "method": "PUT",
+          "path": "/toggles/api/toggles/{slug}/rules",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "body": {
+            "version": 0,
+            "rules": [
+              {
+                "kind": "USER",
+                "value": true,
+                "userSubjects": [
+                  "tok-project-agent-qits-developer"
+                ],
+                "afterInstant": null
+              },
+              {
+                "kind": "TIME",
+                "value": true,
+                "userSubjects": null,
+                "afterInstant": "2026-12-01T00:00:00Z"
+              },
+              {
+                "kind": "STATIC",
+                "value": false,
+                "userSubjects": null,
+                "afterInstant": null
+              }
+            ]
+          },
+          "status": 200,
+          "file": "a-toggle-is-declared-asked-by-an-admin/putToggleRules.json",
+          "frozen": {
+            "ids": [],
+            "instants": [
+              "$.firstDeclaredAt",
+              "$.rules[*].afterInstant"
+            ],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        }
+      ]
+    }
+  ]
 }

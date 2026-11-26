@@ -22,7 +22,9 @@ qits-maintenance's bumps — never by hand (a first adoption is the exception: i
   per call) and the whole-list rules replace under a version. The first entity,
   if one ever comes, is marked for `CausationRowRules` (`CausedRow` or `@Uncaused`) and brings
   `EntityExposureTest`, `docs/entities.json` and `entities:`/`database:` in release.yml.
-- `service/` — the deployable: `api/` the doors and `Roles`; `declarations/` the DSL (`Toggle`),
+- `service/` — the deployable: `api/` the configuration doors (`TogglesResource`: list, read, the
+  rules replace), the rule-list shape check (`RulesShape`), the wire records (`ToggleWire`, their
+  native registration `ApiWireReflection`) and `Roles`; `declarations/` the DSL (`Toggle`),
   the declarations themselves (`Declared`, one `@Produces` field per toggle), their collection and
   check (`Declarations`) and the startup reconcile (`DeclarationReconcile`).
 
@@ -39,6 +41,10 @@ qits-maintenance's bumps — never by hand (a first adoption is the exception: i
   (`Declarations.check`); `declarations/ToggleTest` checks every field of `Declared`, so a bad or
   duplicate slug fails the build. The smoke toggle `toggles-smoke` is declared on purpose and no
   pact uses it: its removal ticket is the retirement's live proof.
+- **Rules are replaced whole** (`PUT /toggles/api/toggles/{slug}/rules`), under the version the
+  writer read: 409 when it moved, 400 for a list `RulesShape` refuses (with the `position` of the
+  rule it names) or an unknown slug. A refused replace changes nothing. Reads are open to every
+  authenticated caller.
 - **Who changes rules**: `qits:admin` and `qits:desk-admin`. `DeskAdminParityTest` holds: wherever
   `qits:admin-agent` is admitted, so is `qits:desk-admin`.
 - **Reflection** (native): every type bound by Jackson on a door is registered for reflection
@@ -57,7 +63,9 @@ Every one of these compares by default and fails with a diff; `-Dgolden.update=t
 | `docs/openapi.yml` | `api/OpenApiSchemaExportTest` (always rewrites; the diff is the review) |
 
 The release gate fails any operation of `docs/openapi.yml` that `golden-masters/index.json` does not
-cover, so a new door joins `GoldenMasterRecordingTest.INTERACTIONS` in the same commit.
+cover, so a new door joins `GoldenMasterRecordingTest.INTERACTIONS` in the same commit. The
+configuration doors are recorded in the state `a toggle is declared, asked by an admin` (the smoke
+toggle redeclared fresh at version 0, `Bearer contract-qits-admin` as a `qits:admin` person).
 `ConsumerPactVerificationTest` verifies pinned consumer pacts (none yet — then flip
 `ClasspathPactLoader.REQUIRED` and drop `@IgnoreNoPactsToVerify`).
 
