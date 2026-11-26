@@ -17,6 +17,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
@@ -104,5 +105,10 @@ class ConsumerPactVerificationTest {
     context.verifyInteraction();
   }
 
-  // --- the states: each one line into the registry (none yet) ------------------------------
+  // --- the states: each one line into the registry -------------------------------------------
+
+  @State(ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN)
+  Map<String, String> aToggleIsDeclaredAskedByAnAdmin() {
+    return states.params(ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN);
+  }
 }
