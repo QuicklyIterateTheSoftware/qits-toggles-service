@@ -58,6 +58,11 @@
              publishes as @userflows/qits-toggles. -->
         <qits.userflows.version>2026.1106.205</qits.userflows.version>
         <qits.service-mock.version>2026.1106.507</qits.service-mock.version>
+        <qits.pact-consumer.version>2026.1106.507</qits.pact-consumer.version>
+        <!-- The providers this service is a consumer of (qits-2714): their golden masters, which
+             contracts/consumer/ writes this service's pacts from. -->
+        <qits.maintenance-golden-masters.version>2026.1126.192119</qits.maintenance-golden-masters.version>
+        <qits.projects-golden-masters.version>2026.1126.34009</qits.projects-golden-masters.version>
         <qits.maven.repository.url>https://registry.qits.wohlben.eu/artifacts/maven/maven</qits.maven.repository.url>
         <!-- Real PostgreSQL binaries as a maven dependency, spawned by the suite: a clone tests
              green with NO DOCKER, so no Testcontainers and no dev services. -->
@@ -95,6 +100,26 @@
                 <groupId>au.com.dius.pact.provider</groupId>
                 <artifactId>junit5</artifactId>
                 <version>${pact.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>au.com.dius.pact.consumer</groupId>
+                <artifactId>junit5</artifactId>
+                <version>${pact.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>qits-pact-consumer</artifactId>
+                <version>${qits.pact-consumer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>qits-maintenance-golden-masters</artifactId>
+                <version>${qits.maintenance-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>qits-projects-golden-masters</artifactId>
+                <version>${qits.projects-golden-masters.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>

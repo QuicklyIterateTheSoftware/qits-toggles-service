@@ -1,0 +1,165 @@
+{
+  "consumer": {
+    "name": "qits-toggles-service"
+  },
+  "interactions": [
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "addWorkComment"
+          },
+          "qits-trigger": {
+            "app": "qits-toggles-service",
+            "kind": "operation",
+            "operationId": "runToggleRetirement"
+          }
+        }
+      },
+      "description": "runToggleRetirement: addWorkComment",
+      "key": "8ab99276",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a comment",
+          "params": {
+            "commentId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "body": "The range 2026-07-01 to 2026-09-30 reproduces it."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/comments",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/projects/api/work/contract-00000001-1/comments"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWork"
+          },
+          "qits-trigger": {
+            "app": "qits-toggles-service",
+            "kind": "operation",
+            "operationId": "runToggleRetirement"
+          }
+        }
+      },
+      "description": "runToggleRetirement: getWork",
+      "key": "40f38303",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a maintenance ticket in detail",
+          "params": {
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-11",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-11"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "status": "REPORTED"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    },
+    "plugins": []
+  },
+  "provider": {
+    "name": "qits-projects-service"
+  }
+}

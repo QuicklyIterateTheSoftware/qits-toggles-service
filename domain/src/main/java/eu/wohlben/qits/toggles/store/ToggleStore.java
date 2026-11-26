@@ -15,6 +15,7 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,11 @@ public class ToggleStore {
   /** The advisory lock two replicas starting at once take, so one reconciles after the other. */
   static final String RECONCILE_LOCK = "qits-toggles-reconcile";
 
-  /** A toggle as stored: the declaration's facts, its rules in order and its version. */
+  /**
+   * A toggle as stored: the declaration's facts, its rules in order, its version, and its usage —
+   * when a deployed consumer's pact last evaluated it and its open removal ticket, each null while
+   * there is none ({@code toggle_usage}).
+   */
   public record StoredToggle(
       String slug,
       String type,
@@ -57,7 +62,9 @@ public class ToggleStore {
       boolean declaredDefault,
       Instant firstDeclaredAt,
       long version,
-      List<Rule> rules) {
+      List<Rule> rules,
+      Instant lastUsedAt,
+      String removalTicket) {
 
     public StoredToggle {
       rules = List.copyOf(rules);
@@ -306,6 +313,61 @@ public class ToggleStore {
         });
   }
 
+  /**
+   * Record that a deployed consumer's pact evaluates each of {@code slugs} as of {@code at}. A slug
+   * no toggle has is skipped: usage is kept only for declared toggles.
+   */
+  public void markUsed(Collection<String> slugs, Instant at) {
+    if (slugs.isEmpty()) {
+      return;
+    }
+    DbRetry.call(
+        "mark the used toggles",
+        () -> {
+          try (Connection db = toggles.getConnection();
+              PreparedStatement upsert =
+                  db.prepareStatement(
+                      "insert into toggles.toggle_usage (slug, last_used_at)"
+                          + " select slug, ? from toggles.toggle where slug = ?"
+                          + " on conflict (slug) do update set last_used_at = excluded.last_used_at")) {
+            for (String slug : new TreeSet<>(slugs)) {
+              upsert.setTimestamp(1, Timestamp.from(at));
+              upsert.setString(2, slug);
+              upsert.addBatch();
+            }
+            upsert.executeBatch();
+            return null;
+          } catch (SQLException e) {
+            throw new IllegalStateException("marking the used toggles failed", e);
+          }
+        });
+  }
+
+  /** Hold {@code ticket} as {@code slug}'s open removal ticket, or none when null. */
+  public void setRemovalTicket(String slug, String ticket) {
+    DbRetry.call(
+        "set the removal ticket of " + slug,
+        () -> {
+          try (Connection db = toggles.getConnection();
+              PreparedStatement upsert =
+                  db.prepareStatement(
+                      "insert into toggles.toggle_usage (slug, removal_ticket)"
+                          + " select slug, ? from toggles.toggle where slug = ?"
+                          + " on conflict (slug) do update set removal_ticket = excluded.removal_ticket")) {
+            upsert.setString(1, ticket);
+            upsert.setString(2, slug);
+            upsert.executeUpdate();
+            return null;
+          } catch (SQLException e) {
+            throw new IllegalStateException("setting the removal ticket of " + slug + " failed", e);
+          }
+        });
+  }
+
+  private static Instant instant(OffsetDateTime at) {
+    return at == null ? null : at.toInstant();
+  }
+
   /** SQLSTATE foreign_key_violation. */
   private static final String FOREIGN_KEY_VIOLATION = "23503";
 
@@ -368,10 +430,11 @@ public class ToggleStore {
     String where = slug == null ? "" : " where slug = ?";
     try (PreparedStatement read =
         db.prepareStatement(
-            "select slug, type, description, declared_default, first_declared_at, version"
-                + " from toggles.toggle"
-                + where
-                + " order by slug")) {
+            "select t.slug, t.type, t.description, t.declared_default, t.first_declared_at,"
+                + " t.version, u.last_used_at, u.removal_ticket"
+                + " from toggles.toggle t left join toggles.toggle_usage u on u.slug = t.slug"
+                + (slug == null ? "" : " where t.slug = ?")
+                + " order by t.slug")) {
       if (slug != null) {
         read.setString(1, slug);
       }
@@ -384,7 +447,9 @@ public class ToggleStore {
                 row.getString(3),
                 row.getBoolean(4),
                 row.getObject(5, OffsetDateTime.class).toInstant(),
-                row.getLong(6)
+                row.getLong(6),
+                instant(row.getObject(7, OffsetDateTime.class)),
+                row.getString(8)
               });
         }
       }
@@ -424,7 +489,9 @@ public class ToggleStore {
                     (Boolean) f[2],
                     (Instant) f[3],
                     (Long) f[4],
-                    rules.get(s))));
+                    rules.get(s),
+                    (Instant) f[5],
+                    (String) f[6])));
     return out;
   }
 }

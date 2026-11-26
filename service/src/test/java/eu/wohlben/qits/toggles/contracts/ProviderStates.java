@@ -5,6 +5,7 @@ import eu.wohlben.qits.toggles.declarations.Toggle;
 import eu.wohlben.qits.toggles.store.Rule;
 import eu.wohlben.qits.toggles.store.ToggleStore;
 import eu.wohlben.qits.toggles.support.ContractCallers;
+import eu.wohlben.qits.toggles.support.FakePeers;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import jakarta.annotation.PostConstruct;
@@ -38,7 +39,9 @@ import java.util.function.Supplier;
  *       holding {@code qits:admin} ({@value #ADMIN_BEARER});
  *   <li>the rules door's refusals: {@value #A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN}
  *       (400), {@value #A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT} (403) and {@value
- *       #A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM} (409).
+ *       #A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM} (409);
+ *   <li>{@value #A_TOGGLE_NO_DEPLOYED_PACT_HAS_USED_FOR_THREE_DAYS}: the retirement run, against
+ *       {@link FakePeers}.
  * </ul>
  *
  * <p>Applying a state twice is the same state.
@@ -74,6 +77,15 @@ public class ProviderStates {
   /** The rules door's 409: the rules changed (version 1) since the admin read version 0. */
   public static final String A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM =
       "a toggle's rules changed since an admin read them";
+
+  /**
+   * The retirement run's state: the smoke toggle declared four days ago and never evaluated by a
+   * deployed pact (qits-maintenance answers none, the ticket book is empty), asked by a platform
+   * service's own client ({@value #CONSUMER_BEARER}, {@code qits:system}) as qits-orchestrator's gc
+   * step asks.
+   */
+  public static final String A_TOGGLE_NO_DEPLOYED_PACT_HAS_USED_FOR_THREE_DAYS =
+      "a toggle no deployed pact has used for three days, asked by a service";
 
   /** An agent's own token, holding no configuring role. */
   public static final String AGENT = "tok-project-agent-contract";
@@ -118,6 +130,8 @@ public class ProviderStates {
 
   @Inject Declarations declarations;
 
+  @Inject FakePeers peers;
+
   @Inject
   @DataSource("toggles")
   AgroalDataSource toggles;
@@ -130,6 +144,8 @@ public class ProviderStates {
         A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN, this::aToggleIsDeclaredAskedByAnAdmin);
     states.put(
         A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM, this::aTogglesRulesChangedSinceAnAdminRead);
+    states.put(
+        A_TOGGLE_NO_DEPLOYED_PACT_HAS_USED_FOR_THREE_DAYS, this::aToggleNoDeployedPactHasUsedFor3Days);
   }
 
   /** One evaluation state per declared toggle, from the declarations themselves. */
@@ -212,6 +228,23 @@ public class ProviderStates {
     }
     grantAdmin();
     return params(ADMIN_BEARER, SLUG);
+  }
+
+  private Setup aToggleNoDeployedPactHasUsedFor3Days() {
+    redeclare(SLUG);
+    try (Connection db = toggles.getConnection();
+        PreparedStatement age =
+            db.prepareStatement(
+                "update toggles.toggle set first_declared_at = now() - interval '4 days'");
+        PreparedStatement usage = db.prepareStatement("delete from toggles.toggle_usage")) {
+      age.executeUpdate();
+      usage.executeUpdate();
+    } catch (SQLException e) {
+      throw new IllegalStateException("could not age the declared toggles", e);
+    }
+    peers.reset();
+    grantConsumer();
+    return params(CONSUMER_BEARER, SLUG);
   }
 
   private static Setup params(String authorization, String slug) {

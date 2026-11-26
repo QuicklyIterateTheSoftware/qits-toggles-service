@@ -4,11 +4,43 @@
 openapi: 3.1.0
 components:
   schemas:
+    Dropped:
+      type: object
+      properties:
+        slug:
+          type: string
+        ticket:
+          type: string
+    Failed:
+      type: object
+      properties:
+        slug:
+          type: string
+        error:
+          type: string
+    Filed:
+      type: object
+      properties:
+        slug:
+          type: string
+        ticket:
+          type: string
+        unusedSince:
+          $ref: "#/components/schemas/Instant"
     Instant:
       type: string
       format: date-time
       examples:
       - 2022-03-10T16:15:50Z
+    Kept:
+      type: object
+      properties:
+        slug:
+          type: string
+        reason:
+          type: string
+        ticket:
+          type: string
     Problem:
       type: object
       properties:
@@ -17,6 +49,33 @@ components:
         position:
           type: integer
           format: int32
+    RetirementReport:
+      type: object
+      properties:
+        dryRun:
+          type: boolean
+        at:
+          $ref: "#/components/schemas/Instant"
+        used:
+          type: array
+          items:
+            type: string
+        filed:
+          type: array
+          items:
+            $ref: "#/components/schemas/Filed"
+        kept:
+          type: array
+          items:
+            $ref: "#/components/schemas/Kept"
+        dropped:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dropped"
+        failed:
+          type: array
+          items:
+            $ref: "#/components/schemas/Failed"
     RuleView:
       type: object
       properties:
@@ -60,12 +119,50 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RuleView"
+        lastUsedAt:
+          $ref: "#/components/schemas/Instant"
+        removalTicket:
+          type: string
   securitySchemes:
     SecurityScheme:
       type: openIdConnect
       openIdConnectUrl: https://idp.qits.wohlben.eu/idp/.well-known/openid-configuration
       description: Authentication
 paths:
+  /toggles/api/retirement/runs:
+    post:
+      summary: File a removal ticket for every toggle no deployed consumer's pact
+        has used for qits.toggles.retire-after (qits:system)
+      operationId: runToggleRetirement
+      parameters:
+      - name: dryRun
+        in: query
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: "What the run filed, kept and dropped; on a dry run, what it\
+            \ would"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetirementReport"
+        "403":
+          description: Not qits:system
+        "502":
+          description: "qits-maintenance did not answer the deployed pacts: nothing\
+            \ was filed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "401":
+          description: Not Authorized
+      tags:
+      - Retirement Resource
+      security:
+      - SecurityScheme:
+        - qits:system
   /toggles/api/toggle/{slug}/boolean:
     get:
       summary: "A declared toggle's answer, frozen for the call chain's origin trace"

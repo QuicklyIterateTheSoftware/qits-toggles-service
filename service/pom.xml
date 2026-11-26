@@ -111,6 +111,28 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <!-- The consumer pacts on qits-maintenance-service and qits-projects-service, written
+                 from their golden masters (contracts/consumer/, qits-2714). -->
+            <groupId>${project.groupId}</groupId>
+            <artifactId>qits-pact-consumer</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius.pact.consumer</groupId>
+            <artifactId>junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>qits-maintenance-golden-masters</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>qits-projects-golden-masters</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <!-- The store every @QuarkusTest here boots against: real postgres binaries, spawned
                  as a child process. -->
             <groupId>io.zonky.test</groupId>

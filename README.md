@@ -49,6 +49,33 @@ bearer. The integrations library stamps both chain headers on every outgoing cal
 sets them. The consumer declares a pact on its toggle's concrete path, which is how the retirement
 run knows the toggle is still used. Golden-master state: `toggle <slug> is declared`, param `slug`.
 
+## Retiring a toggle
+
+`POST /toggles/api/retirement/runs?dryRun=` (`runToggleRetirement`, `qits:system` only) is called
+by qits-orchestrator's `gc` step `toggles-retirement`. A run does the following (`RetirementRun`):
+
+1. **Reads** qits-maintenance's `GET /maintenance/api/deployed-pacts/interactions?provider=qits-toggles-service`.
+   If that read fails, the run answers 502 and files nothing, so a broken read never retires a
+   toggle.
+2. **Records use.** Every declared slug that an evaluation interaction names gets
+   `toggle_usage.last_used_at = now`. The slug comes from the interaction's concrete path
+   `/toggles/api/toggle/<slug>/boolean`, or else from its provider state's `slug` param. Pacts on the
+   configuration doors (landing's) keep nothing alive.
+3. **Files removal tickets.** A declared toggle is unused when neither a deployed pact has used it
+   nor it was declared within `qits.toggles.retire-after` (3d). Such a toggle gets one MAINTENANCE
+   ticket "remove toggle `<slug>`" in project `qits.toggles.retire.project` (`qits`), through
+   qits-projects' `POST /projects/api/work`. The ticket is held in `toggle_usage.removal_ticket`:
+   - while it is open, no second ticket is filed;
+   - one that somebody closed is not filed again;
+   - one that qits-projects no longer has is filed anew.
+4. **Drops tickets that are no longer needed.** When a toggle is used again while its ticket is
+   open, the ticket gets a comment and is moved to DROPPED/OBSOLETE.
+
+A dry run reads and decides the same way and writes nothing. The report lists what was used, filed,
+kept (`USED`, `RECENT`, `TICKET_OPEN`, `TICKET_CLOSED`), dropped and failed.
+
+The list and read doors show each toggle's `lastUsedAt` and `removalTicket`.
+
 ## Layout
 
 - `domain/` — the `toggles` datasource and its Flyway lineage (`db/toggles/migration`, schema

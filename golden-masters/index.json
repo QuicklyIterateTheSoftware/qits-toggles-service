@@ -190,6 +190,36 @@
       ]
     },
     {
+      "name": "a toggle no deployed pact has used for three days, asked by a service",
+      "slug": "a-toggle-no-deployed-pact-has-used-for-three-days-asked-by-a-service",
+      "params": {
+        "authorization": "Bearer contract-qits-consumer",
+        "slug": "toggles-smoke"
+      },
+      "dependsOn": [],
+      "operations": [
+        {
+          "operationId": "runToggleRetirement",
+          "method": "POST",
+          "path": "/toggles/api/retirement/runs",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "status": 200,
+          "file": "a-toggle-no-deployed-pact-has-used-for-three-days-asked-by-a-service/runToggleRetirement.json",
+          "frozen": {
+            "ids": [],
+            "instants": [
+              "$.at",
+              "$.filed[*].unusedSince"
+            ],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        }
+      ]
+    },
+    {
       "name": "a toggle's rules changed since an admin read them",
       "slug": "a-toggle-s-rules-changed-since-an-admin-read-them",
       "params": {

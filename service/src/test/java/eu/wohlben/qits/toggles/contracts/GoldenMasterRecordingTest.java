@@ -148,6 +148,14 @@ class GoldenMasterRecordingTest {
             TOGGLE_PATH + "/rules",
             RULES,
             409));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_NO_DEPLOYED_PACT_HAS_USED_FOR_THREE_DAYS,
+            "runToggleRetirement",
+            "POST",
+            "/toggles/api/retirement/runs",
+            null,
+            200));
     return List.copyOf(all);
   }
 

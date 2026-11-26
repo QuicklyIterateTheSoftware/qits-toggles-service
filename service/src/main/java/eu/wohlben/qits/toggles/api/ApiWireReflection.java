@@ -12,7 +12,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
       ToggleWire.ToggleView.class,
       ToggleWire.RuleView.class,
       ToggleWire.RulesReplace.class,
-      ToggleWire.Problem.class
+      ToggleWire.Problem.class,
+      ToggleWire.RetirementReport.class,
+      ToggleWire.Filed.class,
+      ToggleWire.Kept.class,
+      ToggleWire.Dropped.class,
+      ToggleWire.Failed.class
     })
 public final class ApiWireReflection {
 

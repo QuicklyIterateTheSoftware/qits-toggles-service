@@ -26,7 +26,14 @@ qits-maintenance's bumps — never by hand (a first adoption is the exception: i
   rules replace), the rule-list shape check (`RulesShape`), the wire records (`ToggleWire`, their
   native registration `ApiWireReflection`) and `Roles`; `declarations/` the DSL (`Toggle`),
   the declarations themselves (`Declared`, one `@Produces` field per toggle), their collection and
-  check (`Declarations`) and the startup reconcile (`DeclarationReconcile`).
+  check (`Declarations`) and the startup reconcile (`DeclarationReconcile`); `retirement/` the
+  retirement run (`RetirementRun`) and its peers: `PactInteractions`/`MaintenanceInteractions`
+  (qits-maintenance's deployed pact interactions), `Tickets`/`ProjectsTickets` (qits-projects'
+  `/work`), over `PeerHttp` with this service's own bearer (`ServiceBearer`, the `qits` oidc client).
+- `contracts/consumer/` (tests) — this service's consumer pacts, written from the providers' pinned
+  golden masters with qits-pact-consumer into `pacts/`: `MaintenancePactTest`, `ProjectsPactTest`.
+  **No suite dials a peer**: `support/FakePeers` is the `@Alternative` for both peer interfaces in
+  every `@QuarkusTest`.
 
 ## Conventions
 

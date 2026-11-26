@@ -139,4 +139,9 @@ class ConsumerPactVerificationTest {
   Map<String, String> aTogglesRulesChangedSinceAnAdminReadThem() {
     return states.params(ProviderStates.A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM);
   }
+
+  @State(ProviderStates.A_TOGGLE_NO_DEPLOYED_PACT_HAS_USED_FOR_THREE_DAYS)
+  Map<String, String> aToggleNoDeployedPactHasUsedForThreeDays() {
+    return states.params(ProviderStates.A_TOGGLE_NO_DEPLOYED_PACT_HAS_USED_FOR_THREE_DAYS);
+  }
 }

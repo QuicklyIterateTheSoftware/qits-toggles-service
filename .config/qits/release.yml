@@ -19,7 +19,18 @@ userflows: qits-toggles
 # pact for `GET /toggles/api/toggle/<slug>/boolean`; the retirement reads those pacts (epic
 # qits-2542).
 #
+# THE PACTS this service writes as a consumer, flat in `pacts/` (contracts/consumer/, qits-2714):
+#   qits-maintenance-service  the retirement run's read of the deployed consumers' pact interactions
+#                             on qits-toggles-service (MaintenancePactTest).
+#   qits-projects-service     the retirement run's removal tickets: a held ticket's status and the
+#                             used-again comment (ProjectsPactTest). Filing and dropping are not
+#                             pacted until qits-projects records a MAINTENANCE create and a
+#                             DROPPED/OBSOLETE transition.
+#
 # No entity map and no entity diagram: the store is plain JDBC, so there is no @Entity to map.
 contracts:
   application: qits-toggles
   golden-masters: { from: golden-masters/, packages: [maven, npm] }
+  pacts:
+    qits-maintenance-service: { packages: [maven] }
+    qits-projects-service: { packages: [maven] }
