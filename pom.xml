@@ -62,7 +62,7 @@
         <!-- The providers this service is a consumer of (qits-2714): their golden masters, which
              contracts/consumer/ writes this service's pacts from. -->
         <qits.maintenance-golden-masters.version>2026.1126.192119</qits.maintenance-golden-masters.version>
-        <qits.projects-golden-masters.version>2026.1127.2311</qits.projects-golden-masters.version>
+        <qits.projects-golden-masters.version>2026.1127.50902</qits.projects-golden-masters.version>
         <qits.maven.repository.url>https://registry.qits.wohlben.eu/artifacts/maven/maven</qits.maven.repository.url>
         <!-- Real PostgreSQL binaries as a maven dependency, spawned by the suite: a clone tests
              green with NO DOCKER, so no Testcontainers and no dev services. -->
