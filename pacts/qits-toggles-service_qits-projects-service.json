@@ -64,6 +64,123 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "createWork"
+          },
+          "qits-trigger": {
+            "app": "qits-toggles-service",
+            "kind": "operation",
+            "operationId": "runToggleRetirement"
+          }
+        }
+      },
+      "description": "runToggleRetirement: createWork",
+      "key": "356b5d58",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project exists",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "archetype": "TICKET",
+            "description": "Toggle `checkout-v2` is declared in qits-toggles-service. Delete its declaration and release qits-toggles-service.",
+            "impetus": "No deployed consumer's pact has used toggle `checkout-v2` since 2026-01-01T00:00:00Z.",
+            "project": "00000000-0000-4000-8000-000000000001",
+            "ticketType": "MAINTENANCE",
+            "title": "remove toggle checkout-v2"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "body": {
+            "$.project": {
+              "dataType": "STRING",
+              "expression": "${projectId}",
+              "type": "ProviderState"
+            }
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.project": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/work"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "getWork"
           },
           "qits-trigger": {
@@ -148,6 +265,77 @@
             }
           }
         },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "setWorkStatus"
+          },
+          "qits-trigger": {
+            "app": "qits-toggles-service",
+            "kind": "operation",
+            "operationId": "runToggleRetirement"
+          }
+        }
+      },
+      "description": "runToggleRetirement: setWorkStatus",
+      "key": "eaca7c0d",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a maintenance ticket in detail",
+          "params": {
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-11",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "outcome": "OBSOLETE",
+            "target": "DROPPED"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/status",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/projects/api/work/contract-00000001-11/status"
+      },
+      "response": {
         "status": 200
       },
       "type": "Synchronous/HTTP"

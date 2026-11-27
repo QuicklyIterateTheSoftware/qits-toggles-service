@@ -18,17 +18,16 @@ import org.junit.jupiter.api.Test;
  * tickets ({@link ProjectsTickets}).
  *
  * <ul>
+ *   <li>filing a removal ticket ({@code createWork}): a MAINTENANCE ticket with a {@code
+ *       description}, state {@code a project exists} (qits-2723) — the client sends any title,
+ *       impetus and description, so the row sends the recorded ones;
  *   <li>reading a held ticket's status ({@code getWork}), state {@code a maintenance ticket in
  *       detail};
  *   <li>commenting on a ticket whose toggle is used again ({@code addWorkComment}), state {@code a
- *       ticket with a comment} — the client sends any text, so the row sends the recorded one.
+ *       ticket with a comment} — the client sends any text, so the row sends the recorded one;
+ *   <li>dropping that ticket OBSOLETE ({@code setWorkStatus} to DROPPED/OBSOLETE), state {@code a
+ *       maintenance ticket in detail} (qits-2723).
  * </ul>
- *
- * <p><b>Two calls are not pacted yet</b>, for want of a recording whose request this client sends:
- * filing the MAINTENANCE ticket ({@code createWork}; qits-projects records only BUG and IMPROVEMENT
- * creates, none with a {@code description}), and dropping it OBSOLETE ({@code setWorkStatus} to
- * DROPPED/OBSOLETE; no state records that target). A pact's request body is the recording's, exactly,
- * so neither can be written until qits-projects records them.
  *
  * <p>The pact is {@code pacts/qits-toggles-service_qits-projects-service.json}; {@code
  * -Dgolden.update=true} rewrites it.
@@ -36,6 +35,10 @@ import org.junit.jupiter.api.Test;
 class ProjectsPactTest {
 
   static final GoldenMasters PROJECTS = GoldenMasters.of("qits-projects-service", "qits-projects");
+
+  static final GoldenInteraction TICKET_FILED =
+      GoldenInteraction.of(MaintenancePactTest.RETIREMENT_RUN, "a project exists", "createWork")
+          .consumes("id", "qualifiedId");
 
   static final GoldenInteraction TICKET_READ =
       GoldenInteraction.of(
@@ -46,12 +49,42 @@ class ProjectsPactTest {
       GoldenInteraction.of(
           MaintenancePactTest.RETIREMENT_RUN, "a ticket with a comment", "addWorkComment");
 
+  static final GoldenInteraction TICKET_DROPPED =
+      GoldenInteraction.of(
+          MaintenancePactTest.RETIREMENT_RUN, "a maintenance ticket in detail", "setWorkStatus");
+
   static final ConsumerPact PACT =
-      ConsumerPact.of(MaintenancePactTest.CONSUMER, PROJECTS, TICKET_READ, TICKET_COMMENTED);
+      ConsumerPact.of(
+          MaintenancePactTest.CONSUMER,
+          PROJECTS,
+          TICKET_FILED,
+          TICKET_READ,
+          TICKET_COMMENTED,
+          TICKET_DROPPED);
 
   static ProjectsTickets over(String url) {
     return ProjectsTickets.over(
         new PeerHttp(HttpClient.newHttpClient(), url + "/projects", () -> Optional.of("contract")));
+  }
+
+  @Test
+  void anUnusedToggleGetsItsRemovalTicket() {
+    PACT.run(
+        TICKET_FILED,
+        (url, recorded) -> {
+          Tickets.Filed filed =
+              over(url)
+                  .file(
+                      recorded.params().get("projectId"),
+                      recorded.body().path("title").asText(),
+                      recorded.body().path("impetus").asText(),
+                      recorded.body().path("description").asText());
+          assertEquals(
+              PROJECTS.json(TICKET_FILED.state(), TICKET_FILED.operationId())
+                  .path("qualifiedId")
+                  .asText(),
+              filed.ref());
+        });
   }
 
   @Test
@@ -75,6 +108,13 @@ class ProjectsPactTest {
                 .comment(
                     PROJECTS.params(TICKET_COMMENTED.state()).get("qualifiedId"),
                     recorded.body().path("body").asText()));
+  }
+
+  @Test
+  void aTicketWhoseToggleIsUsedAgainIsDroppedObsolete() {
+    PACT.run(
+        TICKET_DROPPED,
+        (url, recorded) -> over(url).drop(PROJECTS.params(TICKET_DROPPED.state()).get("qualifiedId")));
   }
 
   @Test
