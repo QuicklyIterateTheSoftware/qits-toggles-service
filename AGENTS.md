@@ -73,6 +73,10 @@ The release gate fails any operation of `docs/openapi.yml` that `golden-masters/
 cover, so a new door joins `GoldenMasterRecordingTest.INTERACTIONS` in the same commit. The
 configuration doors are recorded in the state `a toggle is declared, asked by an admin` (the smoke
 toggle redeclared fresh at version 0, `Bearer contract-qits-admin` as a `qits:admin` person).
+The list and read doors are recorded again in `a toggle has an open removal ticket, asked by an
+admin`: the same toggle with a `toggle_usage` row (`lastUsedAt` fixed at `2026-01-04T00:00:00Z`,
+frozen like every instant; `removalTicket` `qits-1`). Every other state leaves the smoke toggle
+without a usage row — `redeclare` deletes the toggle row and `toggle_usage` cascades with it.
 `ConsumerPactVerificationTest` verifies pinned consumer pacts (none yet — then flip
 `ClasspathPactLoader.REQUIRED` and drop `@IgnoreNoPactsToVerify`).
 

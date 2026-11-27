@@ -74,7 +74,8 @@ by qits-orchestrator's `gc` step `toggles-retirement`. A run does the following 
 A dry run reads and decides the same way and writes nothing. The report lists what was used, filed,
 kept (`USED`, `RECENT`, `TICKET_OPEN`, `TICKET_CLOSED`), dropped and failed.
 
-The list and read doors show each toggle's `lastUsedAt` and `removalTicket`.
+The list and read doors show each toggle's `lastUsedAt` and `removalTicket`. Golden-master state
+with both set: `a toggle has an open removal ticket, asked by an admin`, param `slug`.
 
 ## Layout
 

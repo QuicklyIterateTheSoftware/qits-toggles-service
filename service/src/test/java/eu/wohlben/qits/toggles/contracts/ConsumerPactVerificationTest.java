@@ -112,6 +112,11 @@ class ConsumerPactVerificationTest {
     return states.params(ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN);
   }
 
+  @State(ProviderStates.A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN)
+  Map<String, String> aToggleHasAnOpenRemovalTicketAskedByAnAdmin() {
+    return states.params(ProviderStates.A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN);
+  }
+
   // One per declared toggle, `toggle <slug> is declared` (ProviderStates.declared): a declaration
   // added without its line here fails ProviderStateCoverageTest, since its golden master is recorded.
 

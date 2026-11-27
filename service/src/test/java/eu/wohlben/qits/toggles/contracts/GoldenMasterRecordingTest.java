@@ -118,6 +118,22 @@ class GoldenMasterRecordingTest {
             200));
     all.add(
         new Interaction(
+            ProviderStates.A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN,
+            "getToggles",
+            "GET",
+            TOGGLES_PATH,
+            null,
+            200));
+    all.add(
+        new Interaction(
+            ProviderStates.A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN,
+            "getToggle",
+            "GET",
+            TOGGLE_PATH,
+            null,
+            200));
+    all.add(
+        new Interaction(
             ProviderStates.A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN,
             "putToggleRules",
             "PUT",

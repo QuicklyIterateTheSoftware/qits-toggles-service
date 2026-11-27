@@ -14,6 +14,8 @@ import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +39,9 @@ import java.util.function.Supplier;
  *   <li>{@value #A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN}: the configuration doors, the smoke toggle
  *       {@value #SLUG} as a fresh declaration (version 0, its one STATIC rule), asked by a person
  *       holding {@code qits:admin} ({@value #ADMIN_BEARER});
+ *   <li>{@value #A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN}: the list and read doors with
+ *       the smoke toggle's usage set: last used at {@value #LAST_USED_AT} and its open removal
+ *       ticket {@value #REMOVAL_TICKET}, asked by the same admin;
  *   <li>the rules door's refusals: {@value #A_TOGGLE_IS_DECLARED_SENT_MALFORMED_RULES_BY_AN_ADMIN}
  *       (400), {@value #A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT} (403) and {@value
  *       #A_TOGGLES_RULES_CHANGED_SINCE_AN_ADMIN_READ_THEM} (409);
@@ -51,6 +56,21 @@ public class ProviderStates {
 
   public static final String A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN =
       "a toggle is declared, asked by an admin";
+
+  /**
+   * The list and read doors with a usage row: the smoke toggle redeclared fresh, last used at
+   * {@value #LAST_USED_AT} and holding the open removal ticket {@value #REMOVAL_TICKET}, asked by
+   * {@value #ADMIN_BEARER}. Every other state leaves the smoke toggle without a usage row: {@link
+   * #redeclare} deletes its toggle row, and {@code toggle_usage} goes with it (cascade).
+   */
+  public static final String A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN =
+      "a toggle has an open removal ticket, asked by an admin";
+
+  /** The fixed last use {@value #A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN} stages. */
+  public static final String LAST_USED_AT = "2026-01-04T00:00:00Z";
+
+  /** The open removal ticket {@value #A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN} holds. */
+  public static final String REMOVAL_TICKET = "qits-1";
 
   /**
    * The evaluation's state for the smoke toggle, named the way every declared toggle's is (epic
@@ -138,6 +158,9 @@ public class ProviderStates {
 
   public ProviderStates() {
     states.put(A_TOGGLE_IS_DECLARED_ASKED_BY_AN_ADMIN, this::aToggleIsDeclaredAskedByAnAdmin);
+    states.put(
+        A_TOGGLE_HAS_AN_OPEN_REMOVAL_TICKET_ASKED_BY_AN_ADMIN,
+        this::aToggleHasAnOpenRemovalTicketAskedByAnAdmin);
     states.put(A_TOGGLE_SLUG_IS_NOT_DECLARED, this::aToggleSlugIsNotDeclared);
     states.put(A_TOGGLE_IS_DECLARED_ASKED_BY_AN_AGENT, this::aToggleIsDeclaredAskedByAnAgent);
     states.put(
@@ -201,6 +224,26 @@ public class ProviderStates {
     params.put("authorization", ADMIN_BEARER);
     params.put("slug", SLUG);
     return new Setup(Collections.unmodifiableMap(params));
+  }
+
+  private Setup aToggleHasAnOpenRemovalTicketAskedByAnAdmin() {
+    redeclare(SLUG);
+    try (Connection db = toggles.getConnection();
+        PreparedStatement usage =
+            db.prepareStatement(
+                "insert into toggles.toggle_usage (slug, last_used_at, removal_ticket)"
+                    + " values (?, ?, ?) on conflict (slug) do update"
+                    + " set last_used_at = excluded.last_used_at,"
+                    + " removal_ticket = excluded.removal_ticket")) {
+      usage.setString(1, SLUG);
+      usage.setTimestamp(2, Timestamp.from(Instant.parse(LAST_USED_AT)));
+      usage.setString(3, REMOVAL_TICKET);
+      usage.executeUpdate();
+    } catch (SQLException e) {
+      throw new IllegalStateException("could not stage the usage of " + SLUG, e);
+    }
+    grantAdmin();
+    return params(ADMIN_BEARER, SLUG);
   }
 
   private Setup toggleIsDeclared(String slug) {

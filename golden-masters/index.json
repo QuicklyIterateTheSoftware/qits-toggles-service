@@ -3,6 +3,55 @@
   "provider": "qits-toggles",
   "states": [
     {
+      "name": "a toggle has an open removal ticket, asked by an admin",
+      "slug": "a-toggle-has-an-open-removal-ticket-asked-by-an-admin",
+      "params": {
+        "authorization": "Bearer contract-qits-admin",
+        "slug": "toggles-smoke"
+      },
+      "dependsOn": [],
+      "operations": [
+        {
+          "operationId": "getToggle",
+          "method": "GET",
+          "path": "/toggles/api/toggles/{slug}",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "status": 200,
+          "file": "a-toggle-has-an-open-removal-ticket-asked-by-an-admin/getToggle.json",
+          "frozen": {
+            "ids": [],
+            "instants": [
+              "$.firstDeclaredAt",
+              "$.lastUsedAt"
+            ],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        },
+        {
+          "operationId": "getToggles",
+          "method": "GET",
+          "path": "/toggles/api/toggles",
+          "headers": {
+            "Authorization": "{authorization}"
+          },
+          "status": 200,
+          "file": "a-toggle-has-an-open-removal-ticket-asked-by-an-admin/getToggles.json",
+          "frozen": {
+            "ids": [],
+            "instants": [
+              "$[*].firstDeclaredAt",
+              "$[*].lastUsedAt"
+            ],
+            "strings": [],
+            "listFilteredTo": null
+          }
+        }
+      ]
+    },
+    {
       "name": "a toggle is declared, asked by an admin",
       "slug": "a-toggle-is-declared-asked-by-an-admin",
       "params": {
