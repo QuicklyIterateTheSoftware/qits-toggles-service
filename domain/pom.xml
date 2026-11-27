@@ -6,7 +6,7 @@
     <parent>
         <groupId>eu.wohlben.qits</groupId>
         <artifactId>qits-toggles</artifactId>
-        <version>2026.1127.175056</version>
+        <version>2026.1127.184651</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <!-- The domain: the toggles database, its own named datasource and its Flyway lineage
